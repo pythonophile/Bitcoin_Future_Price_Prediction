@@ -1,37 +1,52 @@
-# Bitcoin_Future_Price_Prediction
-The code loads a pre-trained LSTM model to  predict Bitcoin prices. It fetches historical Bitcoin price data using  the yFinance library. The data is normalized and split into training  and testing sets. The LSTM model is used to predict future prices based  on the test data. Predictions and actual prices are visualized in  Streamlit.
+# Bitcoin Future Price Prediction
 
-To create the GitHub repository requirement file (commonly named requirements.txt), you need to include all the necessary Python libraries along with their versions that are required for the project. Based on the provided project details, here's the content for your requirements.txt:
+## Overview
+This project predicts future Bitcoin prices using machine learning models. It uses historical data and features like opening/closing prices and market cap. The model is built using scikit-learn, and a Streamlit app provides a user-friendly interface to interact with the model and make predictions.
 
-numpy==1.24.3
+## Dataset
+The dataset includes daily Bitcoin statistics:
+- **Date**: Date of the observation
+- **Open**: Opening price of Bitcoin
+- **High**: Highest price during the day
+- **Low**: Lowest price during the day
+- **Close**: Closing price of Bitcoin
+- **Volume**: Total trading volume of the day
+- **Market Cap**: Market capitalization of Bitcoin
 
-pandas==2.0.3
+## Features
+- Date
+- Open
+- High
+- Low
+- Close
+- Volume
+- Market Cap
 
-matplotlib==3.7.1
+## Installation
 
-yfinance==0.2.26
-
-scikit-learn==1.3.0
-
-streamlit==1.25.0
-
-tensorflow==2.12.0
-
-keras==2.12.0
-
-Steps to create the requirements.txt file:
-
-Open your project folder.
-
-Create a new text file and name it requirements.txt.
-
-Copy and paste the content above into the file.
-
-Save the file.
-
-This file will allow anyone cloning your GitHub repository to install the necessary packages by running:
-
-bash
-Copy code
+### 1. Clone the Repository
+Clone the repository to your local machine:
+   ```bash
+   git clone https://github.com/pythonophile/Bitcoin_Future_Price_Prediction.git
+   cd Bitcoin_Future_Price_Prediction
+  ```
+### 2. Install Dependencies
+Install the necessary Python packages:
+```
 pip install -r requirements.txt
-Make sure to test the requirements.txt file to ensure it works correctly in a fresh environment.
+```
+
+### Usage
+#### 1. Train the Model
+- Train the model using the Jupyter notebook provided:
+  ```
+  jupyter notebook Bitcoin_Future_Price_Prediction.ipynb
+  ```
+
+#### 2. Running the Streamlit App
+- Run the Streamlit app for predictions and visualizations:
+  ```
+  streamlit run app.py
+  ```
+### Results
+The app provides real-time predictions and visualizations based on historical Bitcoin data. Users can interact with the app to see how future price predictions change based on different models and settings.
