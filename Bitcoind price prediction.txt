@@ -1,0 +1,384 @@
+The code loads a pre-trained LSTM model to 
+predict Bitcoin prices.
+It fetches historical Bitcoin price data using 
+the yFinance library.
+The data is normalized and split into training 
+and testing sets.
+The LSTM model is used to predict future prices based 
+on the test data.
+Predictions and actual prices are visualized in 
+Streamlit, and the model is used to 
+predict future Bitcoin prices for the next 5 days.
+___________________________________________________________
+Pre-Requisite:
+1. Keras: Keras is a high-level neural networks 
+API, written in Python, that runs on top of 
+TensorFlow. It is designed for fast experimentation
+and allows for building deep learning models with 
+minimal code.
+2. LSTM (Long Short-Term Memory):
+LSTM is a type of Recurrent Neural Network (RNN) 
+designed to learn sequences of data by capturing 
+long-term dependencies. It is particularly effective 
+for tasks like time series prediction, speech 
+recognition, and text generation.
+3. ReLU (Rectified Linear Unit):
+ReLU is a common activation function used in neural 
+networks. It introduces non-linearity into the model 
+by outputting the input directly if it's positive; 
+otherwise, it outputs zero. It helps avoid issues like 
+the vanishing gradient problem.
+4. DropOut:
+Dropout is a regularization technique used to prevent 
+overfitting in neural networks. It works by randomly
+ "dropping out" (i.e., setting to zero) a fraction of 
+neurons during training, forcing the model to generalize 
+better.
+5. Dense:
+In Keras, a Dense layer is a fully connected layer 
+where each neuron receives input from every neuron in 
+the previous layer. It's typically used in the final 
+layers of the model for classification tasks.
+6. Adam:
+Adam (Adaptive Moment Estimation) is an optimization 
+algorithm used to update weights in a neural network 
+during training. It combines the advantages of two 
+other methods: AdaGrad and RMSProp, resulting in faster 
+convergence.
+7. Mean Squared Error (MSE):
+MSE is a loss function commonly used for regression 
+tasks. It measures the average of the squared differences 
+between the predicted and actual values. A lower MSE 
+indicates a better fit to the data.
+8. Verbose:
+Verbose is an argument used in Keras to control how much 
+information is printed during training. For example, 
+verbose=1 will print progress bars for each epoch, while 
+verbose=0 will suppress all output.
+9. Epoch:
+An epoch in deep learning refers to one complete pass 
+through the entire training dataset. Multiple epochs are 
+typically used to allow the model to improve its 
+performance over time.
+10. Transform:
+In machine learning, transforming refers to applying 
+certain operations (e.g., scaling, normalizing, encoding) 
+to input data to prepare it for model training. 
+For instance, data may be normalized to ensure all 
+features contribute equally to the learning process.
+_________________________________________________________________
+Bitcoin Price prediction:
+Steps Involved
+1. Data Set
+2. EDA (Exploratory Data Analysis)
+3. Model Creation
+4. Training Model
+5. Testing Model
+6. Predicting Values for Future Days.
+_________________________________________________________
+Requirements:
+YFinance (Use for downloading the Data set)
+Matplotlib (use for making the graphs)
+Scikit-Learn (For scaling the data) 
+Keras
+Numpy and Pandas
+Streamlit (For deployment as web application)
+_________________________________________________________
+Installing the Libraries:
+pip install yfinance numpy pandas scikit-learn streamlit
+_________________________________________________________
+Importing the Libraries:
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+_________________________________________________________
+Downloading the Data set
+data = yf.download('BTC-USD','2015-01-01','2023-11-30')
+data
+data.reset_index(inplace = True)
+_________________________________________________________
+data.drop(columns = ['Date','Open','High','Low','Adj Close','Volume'], inplace=True)
+data
+_________________________________________________________
+First check the plot of the data:
+plt.figure(figsize=(8,10))
+plt.plot(data)
+plt.show()
+_________________________________________________________
+Now we are going to split the data into
+training_Data
+testing_Data
+We will take only 100 number of entries.
+train_data = data[:-100]
+test_data = data[-100:]
+train_data.shape  #Shows us the training data set
+test_data.shape   #Shows us the testing data set
+_________________________________________________________
+Now we are going to do scaling of the data:
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler(feature_range=(0,1))
+_________________________________________________________
+train_data_scale = scaler.fit_transform(train_data)
+base_days = 100
+_________________________________________________________
+Slicing of the Data:
+x = []
+y = []
+for i in range(base_days, train_data_scale.shape[0]):
+    x.append(train_data_scale[i-base_days:i])
+    y.append(train_data_scale[i,0])
+_________________________________________________________
+x, y = np.array(x), np.array(y)
+x = np.reshape(x, (x.shape[0],x.shape[1],1))
+from keras.layers import LSTM, Dense, Dropout
+from keras.models import Sequential
+_________________________________________________________
+model = Sequential()
+model.add(LSTM(50, activation = 'relu', return_sequences=True, input_shape=(x.shape[1],1)))
+model.add(Dropout(0.2))
+model.add(LSTM(60, activation='relu',return_sequences=True))
+model.add(Dropout(0.3))
+model.add(LSTM(80, activation='relu',return_sequences=True))
+model.add(Dropout(0.4))
+model.add(LSTM(120, activation='relu'))
+model.add(Dropout(0.5))
+
+model.add(Dense(units=1))
+model.summary()
+__________________________________________________________
+Sequential: A linear stack of layers where each layer has 
+exactly one input and one output. This is suitable for 
+most feed-forward networks where data flows sequentially 
+from one layer to the next.
+LSTM(50): This defines an LSTM layer with 50 units 
+(neurons). LSTM layers are designed to handle sequential 
+data and are especially good at capturing long-term 
+dependencies.
+activation='relu': The Rectified Linear Unit (ReLU) 
+activation function is applied. It is commonly used 
+in deep learning because it helps avoid the vanishing 
+gradient problem by introducing non-linearity.
+return_sequences=True: This ensures that the LSTM layer 
+returns the output for each time step. When set to True, 
+it returns the full sequence of outputs, which is 
+necessary when stacking multiple LSTM layers.
+input_shape=(x.shape[1], 1): This defines the shape of 
+the input data. x.shape[1] is the number of time steps 
+(e.g., the number of previous days), and 1 refers to the 
+number of features (e.g., the price on each day).
+Dropout(0.2): This layer helps prevent overfitting by 
+randomly "dropping out" 20% of the neurons during 
+training, forcing the model to generalize better. 
+Dropout is commonly used after LSTM layers in time-series
+models.
+_________________________________________________________
+Dense(units=1): A fully connected (Dense) layer with 1 
+unit. This is the output layer, which will output a 
+single value (e.g., the predicted price for the next day). 
+The Dense layer connects all the inputs from the 
+previous LSTM layer to the output neuron.
+_________________________________________________________
+model.compile(optimizer='adam', loss = 'mean_squared_error')
+model.fit(x, y, epochs = 60, verbose =1 )
+_________________________________________________________
+test_data = pd.concat((train_data.tail(100), test_data), ignore_index=True)
+test_data
+_________________________________________________________
+test_data_scale = scaler.transform(test_data)
+_________________________________________________________
+x = []   #Holds the input values
+y = []   #Holds the output values
+
+for i in range(base_days, test_data_scale.shape[0]):
+    x.append(test_data_scale[i-base_days:i])
+    y.append(test_data_scale[i,0])
+
+x: Collects sequences of base_days consecutive 
+data points (e.g., past 100 days of data) from 
+test_data_scale.
+y: Collects the corresponding target value, which is 
+the data point right after each sequence (the price on
+day i).
+In essence:
+
+x: Contains the past base_days days for each sequence.
+y: Contains the next day's price that corresponds to each sequence in x.
+_________________________________________________________
+x, y = np.array(x), np.array(y)
+x = np.reshape(x, (x.shape[0],x.shape[1],1))  #3D 
+pred = model.predict(x)
+_________________________________________________________
+pred = scaler.inverse_transform(pred)
+pred
+_________________________________________________________
+m = y
+z= []
+future_days = 30
+for i in range(base_days, len(m)+future_days):
+    m = m.reshape(-1,1)
+    inter = [m[-base_days:,0]]
+    inter = np.array(inter)
+    inter = np.reshape(inter, (inter.shape[0], inter.shape[1],1))
+    pred = model.predict(inter)
+    m = np.append(m ,pred)
+    z = np.append(z, pred)
+_________________________________________________________
+m = y: Initializes m with the actual price data y.
+
+z = []: Initializes an empty list z to store the 
+predicted prices.
+
+future_days = 30: Sets the number of future days to 
+predict.
+
+for loop: Iterates from base_days to the length of 
+m plus future_days:
+
+Reshaping m: Ensures m is a column vector.
+Creating inter: Extracts the last base_days entries 
+from m for prediction.
+Predicting: Uses the model to predict the next price 
+based on inter.
+Updating m and z: Appends the predicted price to both 
+m and z.
+________________________________________________________
+z = np.array(z)
+z = scaler.inverse_transform(z.reshape(-1,1))
+z
+________________________________________________________
+model.save('Bitcoin_Future_Price_prediction_Model.keras')
+________________________________________________________
+Deployment of the APP:
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+from tensorflow.keras.models import load_model
+from sklearn.preprocessing import MinMaxScaler
+import streamlit as st
+#load Model 
+model = load_model(r'D:\Corvit\Django Web development\Sir Kaleem Classes\Projects Practice\bitcoin price\Bitcoin_Future_Price_prediction_Model.keras')
+
+st.header('Bitcoin Price Prediction Model')
+st.subheader('Bitcoin Price Data')
+data = pd.DataFrame(yf.download('BTC-USD','2015-01-01','2024-09-13'))
+data = data.reset_index()
+st.write(data)
+
+st.subheader('Bitcoin Line Chart')
+data.drop(columns = ['Date','Open','High','Low','Adj Close','Volume'], inplace=True)
+st.line_chart(data)
+
+train_data = data[:-100]
+test_data = data[-200:]
+
+scaler = MinMaxScaler(feature_range=(0,1))
+train_data_scale = scaler.fit_transform(train_data)
+test_data_scale = scaler.transform(test_data)
+base_days = 100
+x = []
+y = []
+for i in range(base_days, test_data_scale.shape[0]):
+    x.append(test_data_scale[i-base_days:i])
+    y.append(test_data_scale[i,0])
+
+x, y = np.array(x), np.array(y)
+x = np.reshape(x, (x.shape[0],x.shape[1],1))
+
+st.subheader('Predicted vs Original Prices ')
+pred = model.predict(x)
+pred = scaler.inverse_transform(pred)
+preds = pred.reshape(-1,1)
+ys = scaler.inverse_transform(y.reshape(-1,1))
+preds = pd.DataFrame(preds, columns=['Predicted Price'])
+ys = pd.DataFrame(ys, columns=['Original Price'])
+chart_data = pd.concat((preds, ys), axis=1)
+st.write(chart_data)
+st.subheader('Predicted vs Original Prices Chart ')
+st.line_chart(chart_data)
+
+m = y
+z= []
+future_days = 5
+for i in range(base_days, len(m)+future_days):
+    m = m.reshape(-1,1)
+    inter = [m[-base_days:,0]]
+    inter = np.array(inter)
+    inter = np.reshape(inter, (inter.shape[0], inter.shape[1],1))
+    pred = model.predict(inter)
+    m = np.append(m ,pred)
+    z = np.append(z, pred)
+st.subheader('Predicted Future Days Bitcoin Price')
+z = np.array(z)
+z = scaler.inverse_transform(z.reshape(-1,1))
+st.line_chart(z)
+__________________________________________________________
+numpy: Used for array manipulation.
+pandas: For data handling and manipulation 
+(especially time-series data).
+yfinance: A Python library to fetch historical 
+stock/cryptocurrency prices from Yahoo Finance.
+tensorflow.keras.models.load_model: For loading 
+the pre-trained model to predict Bitcoin prices.
+MinMaxScaler: From sklearn, used to normalize 
+the data between 0 and 1, a common practice when 
+working with neural networks.
+streamlit: A framework to create interactive web 
+apps in Python.
+_____________________________________________________
+load_model: Loads the pre-trained Bitcoin price 
+prediction model from the specified file path.
+_____________________________________________________
+yf.download: Fetches historical Bitcoin data (BTC-USD)
+from Yahoo Finance from January 1, 2015, to September 
+13, 2024.
+pd.DataFrame: Converts the fetched data into a Pandas 
+DataFrame.
+st.write: Displays the DataFrame on the web interface.
+_____________________________________________________
+data.drop: Drops unnecessary columns (Date, 
+Open, High, etc.) and keeps only the Close 
+price for prediction.
+st.line_chart: Visualizes the Bitcoin price data 
+in the form of a line chart.
+_____________________________________________________
+train_data & test_data: Splits the data into training 
+and testing sets.
+train_data: All data except the last 100 entries.
+test_data: The last 200 entries.
+MinMaxScaler: Scales the data between 0 and 1, which 
+is essential when using neural networks to ensure 
+faster convergence and better model accuracy.
+fit_transform: Fits the scaler to train_data and 
+transforms it.
+transform: Applies the same scaling to test_data.
+_____________________________________________________
+base_days: Defines the number of previous 
+days to consider for making predictions 
+(in this case, 100 days).
+x: Stores the input data sequences, where each 
+sequence consists of base_days worth of Bitcoin 
+price data.
+y: Stores the target data, which is the price at day i.
+np.array & np.reshape: Converts the lists x and y 
+to numpy arrays and reshapes x into a 3D array 
+compatible with the LSTM model (samples, time_steps, 
+features).
+_____________________________________________________
+model.predict(x): Uses the pre-trained model to 
+predict future prices based on the input data x.
+scaler.inverse_transform: Converts the predicted scaled 
+data back to the original price scale.
+pd.DataFrame: Converts predictions and actual prices 
+into DataFrames for visualization.
+st.line_chart: Plots the predicted and original Bitcoin 
+prices on a line chart.
+______________________________________________________
+future_days: The number of future days to predict 
+(5 days in this case).
+The loop predicts future prices by iteratively feeding 
+the last base_days prices to the model, obtaining 
+predictions for the next day, and appending them to the 
+sequence m.
+______________________________________________________
